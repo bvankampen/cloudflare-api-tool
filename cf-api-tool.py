@@ -35,6 +35,12 @@ class CloudflareApi:
         self.zone = self.cf.zones.get(
             params={'name': domain, 'per_page': 1})[0]
 
+    def check_name(self, name):
+        if self.domain not in name:
+            return f"{name}.{self.domain}"
+        else:
+            return name
+
     def get_record_from_cf(self, name):
         record = self.cf.zones.dns_records.get(
             self.zone['id'], params={'name': name})
@@ -44,11 +50,11 @@ class CloudflareApi:
             return record[0]
 
     def get_record(self, name):
-        name = f"{name}.{self.domain}"
-        pprint(self.cf.zones.dns_records.get(self.zone['id'], params={'name': name}))
+        name = self.check_name(name)
+        print(self.cf.zones.dns_records.get(self.zone['id'], params={'name': name}))
 
     def update_record(self, name, type, content, proxy=False):
-        name = f"{name}.{self.domain}"
+        name = self.check_name(name)
         record = self.get_record_from_cf(name)
 
         dns_record = {
@@ -75,7 +81,7 @@ class CloudflareApi:
             )
 
     def delete_record(self, name):
-        name = f"{name}.{self.domain}"
+        name = self.check_name(name)
         record = self.get_record_from_cf(name)
         if record != None:
             self.cf.zones.dns_records.delete(
