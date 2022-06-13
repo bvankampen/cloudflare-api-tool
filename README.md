@@ -3,7 +3,8 @@ Simple tool to update Cloudflare DNS records via commandline.
 
 ```
 Usage:
-    cf-api-tool.py get <name>
+    cf-api-tool.py get [--json]
+    cf-api-tool.py get <name> [--json]
     cf-api-tool.py delete <name>
     cf-api-tool.py update <name> <type> <content> [--proxy]
     cf-api-tool.py (-h | --help)
@@ -13,6 +14,7 @@ Options:
     -h --help   Show this screen
     --version   Show version
     --proxy     Proxy in case of CNAME (default not)
+    --json      Print output as json
 ```
 
 **Installation**
