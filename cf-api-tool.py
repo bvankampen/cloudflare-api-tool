@@ -3,7 +3,8 @@
 """Cloudflare API Tool.
 
 Usage:
-    cf-api-tool.py get <name>
+    cf-api-tool.py get [--json]
+    cf-api-tool.py get <name> [--json]
     cf-api-tool.py delete <name>
     cf-api-tool.py update <name> <type> <content> [--proxy]
     cf-api-tool.py (-h | --help)
@@ -13,6 +14,7 @@ Options:
     -h --help   Show this screen
     --version   Show version
     --proxy     Proxy in case of CNAME (default not)
+    --json      Print output as json
 
 """
 
@@ -26,6 +28,23 @@ from sys import argv
 from pprint import pprint
 
 CONFIG_FILE = '~/.config/cloudflare/config.ini'
+
+class Output:
+
+    def format_record(self, record):
+        print(f"Name    : {record['name']}")
+        print(f"Type    : {record['type']}")
+        print(f"Content : {record['content']}")
+        print(f"TTL     : {record['ttl']}")
+        print(f"Proxied : {record['proxied']}")
+        print()
+
+    def print(self, data, as_json = False):
+        for record in data:
+            if as_json:
+                print(record)
+            else:            
+                self.format_record(record)
 
 class CloudflareApi:
 
@@ -51,7 +70,10 @@ class CloudflareApi:
 
     def get_record(self, name):
         name = self.check_name(name)
-        print(self.cf.zones.dns_records.get(self.zone['id'], params={'name': name}))
+        return self.cf.zones.dns_records.get(self.zone['id'], params={'name': name})
+
+    def get_all_records(self):
+        return self.cf.zones.dns_records.get(self.zone['id'])
 
     def update_record(self, name, type, content, proxy=False):
         name = self.check_name(name)
@@ -102,9 +124,14 @@ def main():
     args = docopt(__doc__, version='Cloudflare API Tool 1.0')
 
     cf = CloudflareApi(config['DEFAULT']['Token'], config['DEFAULT']['Domain'])
+    output = Output()
 
     if args['get']:
-        cf.get_record(args['<name>'])
+        if args['<name>'] == None:
+            data = cf.get_all_records()
+        else:
+            data = cf.get_record(args['<name>'])
+        output.print(data, args['--json'])
     
     if args['delete']:
         cf.delete_record(args['<name>'])
