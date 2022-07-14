@@ -3,8 +3,8 @@
 """Cloudflare API Tool.
 
 Usage:
-    cf-api-tool.py get [--json]
-    cf-api-tool.py get <name> [--json]
+    cf-api-tool.py get [--json] [--long]
+    cf-api-tool.py get <name> [--json] [--long]
     cf-api-tool.py delete <name>
     cf-api-tool.py update <name> <type> <content> [--proxy]
     cf-api-tool.py (-h | --help)
@@ -15,6 +15,7 @@ Options:
     --version   Show version
     --proxy     Proxy in case of CNAME (default not)
     --json      Print output as json
+    --long      Print long format (default not)
 
 """
 
@@ -29,9 +30,10 @@ from pprint import pprint
 
 CONFIG_FILE = '~/.config/cloudflare/config.ini'
 
+
 class Output:
 
-    def format_record(self, record):
+    def print_long(self, record):
         print(f"Name    : {record['name']}")
         print(f"Type    : {record['type']}")
         print(f"Content : {record['content']}")
@@ -39,12 +41,20 @@ class Output:
         print(f"Proxied : {record['proxied']}")
         print()
 
-    def print(self, data, as_json = False):
+    def print_short(self, record):
+        name = f"{record['name']}."
+        print(
+            f"{name:50} {str(record['ttl']):7} IN      {record['type']:7} {record['content']}")
+
+    def print(self, data, as_json=False, as_long=False):
         for record in data:
             if as_json:
                 print(record)
-            else:            
-                self.format_record(record)
+            elif as_long:
+                self.print_long(record)
+            else:
+                self.print_short(record)
+
 
 class CloudflareApi:
 
@@ -113,7 +123,7 @@ class CloudflareApi:
 
 
 def main():
-    config = configparser.ConfigParser()   
+    config = configparser.ConfigParser()
 
     if not os.path.exists(os.path.expanduser(CONFIG_FILE)):
         print(f"Config file {CONFIG_FILE} doesn't exists")
@@ -131,8 +141,8 @@ def main():
             data = cf.get_all_records()
         else:
             data = cf.get_record(args['<name>'])
-        output.print(data, args['--json'])
-    
+        output.print(data, as_json=args['--json'], as_long=args['--long'])
+
     if args['delete']:
         cf.delete_record(args['<name>'])
 
@@ -143,6 +153,7 @@ def main():
             args['<content>'],
             args['--proxy']
         )
+
 
 if __name__ == "__main__":
     main()
